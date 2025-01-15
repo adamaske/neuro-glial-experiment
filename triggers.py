@@ -1,3 +1,0 @@
-#psychopy
-
-print("triggers")
