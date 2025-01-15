@@ -1,0 +1,3 @@
+#psychopy
+
+print("triggers")

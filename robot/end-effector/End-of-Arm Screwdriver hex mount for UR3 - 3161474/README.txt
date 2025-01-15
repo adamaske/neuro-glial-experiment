@@ -1,0 +1,1 @@
+End-of-Arm Screwdriver hex mount for UR3 by brunoargenton on Thingiverse: https://www.thingiverse.com/thing:3161474
