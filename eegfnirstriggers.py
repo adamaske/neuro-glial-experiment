@@ -18,6 +18,7 @@ eeg_target_port = 1000  # Change this to the desired port number
 # Create a UDP socket
 eeg_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
+
 eeg_messages = [ 
     b'<gRecorder><DAQ.KeyboardMarkerUdpMessage assembly="gRecorder" name="0"/></gRecorder>',
     b'<gRecorder><DAQ.KeyboardMarkerUdpMessage assembly="gRecorder" name="1"/></gRecorder>',
