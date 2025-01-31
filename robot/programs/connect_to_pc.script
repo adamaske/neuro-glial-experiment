@@ -1,0 +1,4 @@
+socket_open("10.47.20.11", 32000)
+
+local pressure = force()
+socket_send_string("HELLO FROM ROBOTS")

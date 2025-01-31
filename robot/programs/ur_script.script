@@ -1,0 +1,161 @@
+
+
+
+def myProg():
+  global a = 0 # GLOBAL VARIABLE
+
+  def myFun():
+    local b = 1 
+
+    #In this function both a and b are available
+  end
+
+  #Here only a is available, because b is local to the myFun
+  thread myThread():
+    enter_critical
+    # Do some stuff
+    exit_critical
+    return
+  end
+  thrd = run myThread()
+  join thrd
+  kill thrd
+
+
+  $ 2 "var_1= True " 
+  global var_1= True
+  
+  #MOVEMENT
+  #movement is achieved by the functions movej, movel
+  #and speed functions speedj, speedl
+  movej(q, a=1.4, v=1.05, t=0, r=0) # set tool position relative to base
+  # q - Either joint positions
+  #   - or Pose -> Set the position of the tool -> Inverse Kinematics
+  # a - joint acceleration
+  # v - joint speed leading axis
+  # t - time (seconds) 
+  # r - blend 
+  local position_one = p(0, 0, 20, 0, 90, 0)
+  movej(position_one, t=1)
+  
+  movel() # set tool position relative to itself
+  # q - Either joint positions
+  #   - or Pose -> Set the position of the tool -> Inverse Kinematics
+  # a - joint acceleration
+  # v - joint speed leading axis
+  # t - time (seconds) 
+  # r - blend 
+  movep() # Blend movej and movel
+  # q - Either joint positions
+  #   - Target pose
+  # a - joint acceleration
+  # v - joint speed leading axis
+  # t - time (seconds) 
+  # r - blend 
+
+  speedj(qd, a, t) # Accelrate a joint linearly in joint space
+  # qd : joint speeds [rad/s] - LOOP : [0, 0, 0, 0 0 0 3] ->[0, 0, 0, 0 0 0 -3]
+  # a : joint acceleration [rad/sˆ2] (of leading axis)
+  # t : time [s] before the function returns (optional)
+  speedl(xd, a, t, aRot=’a’) # Accelerate the tool linearly  (Carthesian coordinates)
+  # xd : tool speed [m/s] (spatial vector)
+  # a : tool position acceleration [m/sˆ2]
+  # t : time [s] before function returns (optional)
+  # aRot : tool acceleration [rad/sˆ2] (optional), if not defined
+  # a , position acceleration, is used
+
+  #STOPPING
+  stopj(a) # Deaccelerate joint speeds
+  # a : deaccelration speed (rad/s)
+  stopl(a, aRot=’a’) # Deaccelrate the tool -> 
+  # a : tool accleration [m/sˆ2]
+  # aRot : tool acceleration [rad/sˆ2] (OPTIONAL)
+
+
+  # IDENTIFY "TARGET" -> Align the robot to the hands/foot
+  # enter freedrive
+  # move the robot to the hand
+  # exit freedrive
+  # read position = hand1_pos
+  # MOVE TO THE HAND 
+  # movej(hand_pos, 1)
+  # STIMULATE HAND -> upwards and downards 0.1 second
+  # movel(p(0, 0, 1, 0, 0, 0), 0.1)
+
+  #JOINTS
+  #joint positions - q - 6 floats
+  #joint orientations - qd
+  #End-effector pose - x - 6 floats - 3 position, 3 orientation
+  get_actual_joint_positions() # Read the angles for each joint
+  # Return : [Base,Shoulder, Elbow, Wrist1, Wrist2, Wrist3] (6 floats rad/s)
+  
+  get_actual_joint_speeds() # Returns the actual angular velocities of all joints
+  #Return : [Base, Shoulder, Elbow, Wrist1, Wrist2, Wrist3] (6 floats rad/s)
+  
+  get_target_tcp_pose() # Return the position of the TOOL
+  # Return : Tool position & rotation vector ([X, Y, Z, Rx, Ry, Rz])
+  get_target_tcp_speed() # Return speed of tool
+  # Return : The TCP speed; (pose)
+  
+  # PRESSURE at tool
+  get_tcp_force() # Force / Torque at the tool 
+  # calcualted from the deviation of target position and actual position4
+  # Return : wrench (pose) (6 floats) lx, ly, lz, ax, ay, az
+
+  local pressure = force() # What force is exerted at the tcp ? 
+  # Return : Force x,y,z in Newtons (3 floats)
+
+  is_within_safety_limits(pose) # . 
+  # pose: Target pose (which can also be specified as joint positions)
+  # Return : True if within limits, false otherwise (bool)
+
+  popup(s, title=’Popup’, warning=False, error=False) # Display message in popup window on GUI
+  # s : message string
+  # title : title string
+  # warning : warning message?
+  # error : error message?
+
+  # idk what force mode is ? 
+
+  set_tcp(pose) # Set where the center of the tool is
+  # pose: A pose describing the transformation
+
+  textmsg(s1, s2=’’) # Send message with s1 and s2 concatenated to be shown on the GUI log-tab
+  #s1: message string, variables of other types (int, bool poses etc.) can also be sent
+  #s2: message string, variables of other types (int, bool poses etc.) can also be sent
+  
+  interpolate_pose(p_from, p_to, alpha) #inear interpolation of tool position and orientation
+  #P_from: tool pose (pose)
+  #P_to: tool pose (pose)
+  #Alpha: Floating point number
+  #Return : interpolated pose (pose)
+
+  pose_add(p_1, p_2) # Adds two poses
+  pose_sub(p_to, p_from) #Subtract two poses
+  pose_dist(p1, p2) # Distance between two poses
+  pose_trans(p from, p from to) #Pose transformation
+  #NETWORKING
+  socket_open(address, port, socket name=’socket_0’)
+  # address : Server address (string)
+  # port : Port number (int)
+  # socket name : Name of socket (string)
+  # return  : False if failed, True if established
+
+  socket_close(socket name=’socket_0’) #closes socket connection
+  socket_read_line(socket name=’socket_0’) #Read the socket buffer until the first \r\n or \n, bytes in network order
+  
+
+  force_mode()
+  end_force_mode() #
+
+  # MOVE BY HAND 
+  freedrive_mode()#start 
+  end_freedrive_mode()#stop
+
+  #Same as freedrive ?
+  teach_mode()
+  end_teach_mode()
+
+  #Notify us if the robot deviates
+  position_deviation_warning(enabled, threshold=0.8)
+end

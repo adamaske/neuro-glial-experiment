@@ -1,0 +1,14 @@
+def myProg():
+
+    hz = 125 # 
+    counter = 0
+
+    seconds_to_run = 3
+    while counter < (hz * seconds_to_run):
+        counter = counter + 1
+        local pressure = force() # X,y, z in Newtons
+    
+        textmsg("Force At Tool : ", s2=pressure)
+    end
+    
+end

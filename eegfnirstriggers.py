@@ -1,5 +1,4 @@
 """Example program to demonstrate how to send string-valued markers into LSL."""
-
 import random
 
 from pylsl import StreamInfo, StreamOutlet
@@ -9,7 +8,6 @@ import time
 use_fnirs = True
 use_eeg = True
 use_robot = True
-
 
 # EEG -> g.Recorder via UDP 
 eeg_target_ip = '127.0.0.1'  # Change this to the desired target IP
