@@ -1,0 +1,24 @@
+{
+    "experiment_name": "ADEPT_Heel_Stimulation",
+    "date_time": "01_02_2025_00_04_07",
+    "subject_ID": 0,
+    "trial_number": 1,
+    "blocks": [
+        "Rest",
+        "Stimuli"
+    ],
+    "durations": [
+        1,
+        2
+    ],
+    "block_order": [
+        0,
+        1,
+        0,
+        1
+    ],
+    "block_wait_for_input": [
+        false,
+        true
+    ]
+}

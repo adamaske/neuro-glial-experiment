@@ -1,0 +1,5 @@
+31/01/2025 18:20:57 : UDP socket established 127.0.0.1 : 1000
+31/01/2025 18:20:57 : LSL outlet established Trigger : Markers, 1 x int32 channels, SOURCE : ADEPT
+31/01/2025 18:20:57 : TCP server established on 192.168.50.53 : 32000
+31/01/2025 18:20:59 : Started block : Rest
+31/01/2025 18:20:59 : Pushed marker : 0
