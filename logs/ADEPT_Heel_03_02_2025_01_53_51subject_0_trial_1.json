@@ -1,6 +1,6 @@
 {
-    "experiment_name": "ADEPT_Heel_Stimulation",
-    "date_time": "01_02_2025_00_04_19",
+    "experiment_name": "ADEPT_Heel",
+    "date_time": "03_02_2025_01_53_51",
     "subject_ID": 0,
     "trial_number": 1,
     "blocks": [
@@ -8,8 +8,8 @@
         "Stimuli"
     ],
     "durations": [
-        1,
-        2
+        3,
+        5
     ],
     "block_order": [
         0,
@@ -20,5 +20,8 @@
     "block_wait_for_input": [
         false,
         true
-    ]
+    ],
+    "using_fnirs": true,
+    "using_eeg": true,
+    "use_ur3": false
 }

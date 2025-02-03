@@ -3,20 +3,30 @@ import os
 import time
 import datetime
 import socket
+import logging
+import threading
 import json
 from pylsl import StreamInfo, StreamOutlet
 
+#What remains ? 
+
 # Experiment
-experiment_name = "ADEPT Heel Stimulation".replace(" ", "_")
+experiment_name = "ADEPT Heel".replace(" ", "_")
 conducted_time = datetime.datetime.now()
 subject_id = 0
 trial_number = 1
 
 # Block Design
 blocks = [ "Rest", "Stimuli" ]
-durations = [ 1, 2 ] # Seconds
+durations = [ 3, 5 ] # Seconds
 block_order = [ 0, 1, 0, 1] # NOTE : This are indices into the Blocks array
-wait_for_input_blocks = [ False, True ] # If True : to proceed to next block, a manual input is needed
+wait_for_input_blocks = [ False, False ] # If True : to proceed to next block, a manual input is needed
+
+
+use_fnirs = True # 
+use_eeg = True # 
+use_ur3 = False # NOTE : This requires the program to wait for an accepted connection before experiment can start
+
 
 def validate_block_design(): # NOTE : This verifies your block design is possible to complete
     assert(len(durations) == len(blocks)) # Each block needs a duration
@@ -48,9 +58,13 @@ def save_experiment_to_file():
         "blocks" : blocks, # Block Design
         "durations" : durations,
         "block_order" : block_order,
-        "block_wait_for_input" : wait_for_input_blocks
+        "block_wait_for_input" : wait_for_input_blocks,
+        
+        "using_fnirs" : use_fnirs,
+        "using_eeg" : use_eeg,
+        "use_ur3" : use_ur3,
     }
-    filename = experiment_name + "_" + conducted_time.strftime("%d_%m_%Y_%H_%M_%S") + "_trial_" + str(trial_number) + ".json"
+    filename = experiment_name + "_" + conducted_time.strftime("%d_%m_%Y_%H_%M_%S") + "subject_" + str(subject_id) +  "_trial_" + str(trial_number) + ".json"
     filepath = "logs/" + filename 
 
     with open(filepath, "w") as json_file:
@@ -58,24 +72,26 @@ def save_experiment_to_file():
     json_file.close()
 save_experiment_to_file()
 
+
 # Logging
-# A txt file is opened called experiment name + start time + trial number + _log 
-# Call log to append to this file
-log_filename = experiment_name + "_" + conducted_time.strftime("%d_%m_%Y_%H_%M_%S") + "_trial_" + str(trial_number) + "_log" ".txt"
-log_filepath = "logs/" + log_filename 
-log_file = open(log_filepath, "w")
-def log(msg:str):
-    log_file.write(datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S") + " : ")
-    log_file.write(msg)
-    log_file.write("\n")
-    
+# NOTE : Use logging.debug|info|error|warning to write to screen and console, use printf for only console
+log_filename = experiment_name + "_" + conducted_time.strftime("%d_%m_%Y_%H_%M_%S") + "subject_" + str(subject_id) + "_trial_" + str(trial_number) + ".log"
+log_filepath = "logs/" + log_filename
+logging.basicConfig(
+    level=logging.DEBUG,  # Set the lowest level to capture all messages
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(log_filepath),  # Log to a text file
+        logging.StreamHandler()  # Log to the console
+    ]
+)
+
 # EEG 
 # g.Recorder listens to a socket via the Universal Datagram Protocol (UDP)
 eeg_target_ip = '127.0.0.1'  # Change this to g.Recorder computer IP address
 eeg_target_port = 1000  # Change this to the port set in g.Recorder
 eeg_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # IPv4 UDP Socket 
-print(f"UDP socket established {eeg_target_ip} : {eeg_target_port}")
-log(f"UDP socket established {eeg_target_ip} : {eeg_target_port}")
+logging.info(f"UDP socket established {eeg_target_ip} : {eeg_target_port}")
 
 def fill_grecorder_xml_msg(input): #inser input into XML as required by g.Recorder
     msg = '<gRecorder><DAQ.KeyboardMarkerUdpMessage assembly="gRecorder" name="' + str(input) + '"/></gRecorder>'
@@ -83,14 +99,18 @@ def fill_grecorder_xml_msg(input): #inser input into XML as required by g.Record
 
 # fNIRS
 # Aurora is listening to a Lab Streaming Layer (LSL) named "Trigger" of type "Markers"
-fnirs_info = StreamInfo(name="Trigger", 
-                        type="Markers", 
-                        channel_count=1, 
-                        channel_format='int32', 
-                        source_id='ADEPT') 
+stream_name = "Triggers"
+stream_type = "Markers"
+stream_channels = 1
+stream_format = "int32"
+stream_id = "ADEPT"
+fnirs_info = StreamInfo(name=stream_name, 
+                        type=stream_type, 
+                        channel_count=stream_channels, 
+                        channel_format=stream_format, 
+                        source_id=stream_id) 
 fnirs_outlet = StreamOutlet(fnirs_info) # LSL outlet
-print(f"LSL outlet established Trigger : Markers, 1 x int32 channels, SOURCE : ADEPT")
-log(f"LSL outlet established Trigger : Markers, 1 x int32 channels, SOURCE : ADEPT")
+logging.info(f"LSL outlet established {stream_name}:{stream_type}, {stream_channels}x{stream_format} @ {stream_id}")
 
 # UR3 Connection - TCP Server
 ur_server_ip = "192.168.50.53" # use "ipconfig"  to get this server
@@ -98,32 +118,26 @@ ur_server_port = 32000 #
 # NOTE : This ip, and port must be set in the UR3 program "Before Start" module -> socket_open(ip, port)
 ur_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # TCP server
 ur_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # NOTE : Dont use, reserved for connection
-print(f"TCP server established on {ur_server_ip} : {ur_server_port}")
-log(f"TCP server established on {ur_server_ip} : {ur_server_port}")
-
-use_fnirs = True # 
-use_eeg = True # 
-use_ur3 = False # NOTE : This requires the program to wait for an accepted connection before experiment can start
+logging.info(f"TCP server established on {ur_server_ip} : {ur_server_port}")
 
 if use_ur3: 
     print(f"Please establish the UR3 TCP connection before starting experiment : ")
     ur_server.listen(5)
     print(f"TCP server listening on {ur_server_ip}:{ur_server_port} and waiting for UR3 connection...")
     ur_socket, ur_address = ur_server.accept()
-    print(f"Connection established with UR3 : {ur_address}")
-    log(f"Connection established with UR3 : {ur_address}.")
+    logging.info(f"Connection established with UR3 : {ur_address}.")
 
 
-def push_block_onset_marker(block_idx:int): # Send marker
-    log("Pushed marker : " + str(block_idx))
+def push_block_onset_marker(block_idx:int): # Marks data with the onset of each block.
     if use_fnirs:
         fnirs_outlet.push_sample([block_idx])
     if use_eeg:
         eeg_socket.sendto(fill_grecorder_xml_msg(block_idx), (eeg_target_ip, eeg_target_port)) # NOTE : This is already encoded to bytes
     if use_ur3:
        pass
-    print("Pushed marker : [ " + blocks[block_idx] + " ]")
-    
+    logging.debug("Pushed marker : " + str(block_idx))
+
+
 start = input(f"Press [ ENTER ] to start trial {trial_number}...")
 
 
@@ -133,8 +147,8 @@ for idx in range(len(block_order)):
     current_block = blocks[block_idx]
     block_duration = durations[block_idx]
     
-    print(f"Started block : {current_block}")
-    log(f"Started block : {current_block}")
+    print("\n\n")
+    logging.debug(f"STARTED : {current_block}")
     push_block_onset_marker(block_idx)
     
     
@@ -155,16 +169,14 @@ for idx in range(len(block_order)):
             break
         
         if remaining_time <= 3: 
-            print(f"Block [ {current_block} ] starting in {remaining_time:.2f} seconds...", end="\r")
+            print(f"Block [ {current_block} ] starting in {remaining_time:.2f} seconds...", end="\r1")
         else: 
             print(f"Remaining time for block {block_idx}: {remaining_time:.2f} seconds..-", end='\r')
         
         
-        time.sleep(0.1)  # Sleep to prevent excessive CPU usage
+        time.sleep(0.01)  # Sleep to prevent excessive CPU usage
     
-    print(f"\nFinished block : {current_block}")
-    log(f"Finished block : {current_block}")
+    logging.debug(f"ENDED : {current_block}")
 
 
-log("Experiment Complete.")
-log_file.close() # Close log file
+logging.debug("Experiment Complete.")
