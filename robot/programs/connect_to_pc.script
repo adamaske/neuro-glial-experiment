@@ -1,4 +1,2 @@
-socket_open("10.47.20.11", 32000)
-
-local pressure = force()
-socket_send_string("HELLO FROM ROBOTS")
+socket_open("10.47.20.11", 32000, socket name="socket 0")
+socket_send_string("HELLO FROM ROBOT", socket name="socket 0")

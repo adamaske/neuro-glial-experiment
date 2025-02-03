@@ -46,7 +46,6 @@ def print_experiment_description():
         order_string = order_string + (blocks[elm] + "->")
     order_string = order_string + "End"
     print("Block Order : ", order_string)
-print_experiment_description()  
 
 def save_experiment_to_file():
     encoded = {
@@ -85,6 +84,8 @@ logging.basicConfig(
         logging.StreamHandler()  # Log to the console
     ]
 )
+logging.getLogger().handlers[0].level = logging.DEBUG
+logging.getLogger().handlers[1].level = logging.INFO # Dont print debug info to console
 
 # EEG 
 # g.Recorder listens to a socket via the Universal Datagram Protocol (UDP)
@@ -138,27 +139,43 @@ def push_block_onset_marker(block_idx:int): # Marks data with the onset of each 
     logging.debug("Pushed marker : " + str(block_idx))
 
 
-start = input(f"Press [ ENTER ] to start trial {trial_number}...")
+print_experiment_description()  
 
+start = input(f"Press [ ENTER ] to start first trial block [{blocks[block_order[0]]}]...")
+
+def block_order_with_active_border(active_idx):
+    order = ""
+    for idx in range(len(block_order)):
+        block = blocks[block_order[idx]]
+        if idx == active_idx:
+            order += "[" + block.upper() + "]" + "->"
+        else:
+            order += block + "->"
+
+        if idx == len(block_order) - 1:
+            order += "END"
+    
+    return order
 
 for idx in range(len(block_order)):
     block_start_time = time.time()
     block_idx = block_order[idx]
     current_block = blocks[block_idx]
     block_duration = durations[block_idx]
-    
-    print("\n\n")
-    logging.debug(f"STARTED : {current_block}")
-    push_block_onset_marker(block_idx)
+    is_final_block = (idx == (len(block_order) - 1)) 
+
+    logging.info(f"Started Block : [{current_block}]") # Notify controller 
+    print(f"\nStarted Block : [{current_block}]")
+    print(f"Order : {block_order_with_active_border(idx)}")
+    push_block_onset_marker(block_idx) # Mark data what block started
     
     
     if wait_for_input_blocks[block_idx]: #Handle manual procedure blocks
-        if idx == len(block_order)-1: # Is this the final block?
-            proceed = input("Press [ ENTER ] to complete experiment trial...")
-            continue
+        if is_final_block: # Is this the final block?
+            proceed = input(F"Current Block : [{current_block}] | Press [ ENTER ] to complete trial...")
         else:
-            proceed = input(f"Press [ ENTER ] to proceed to next block : {blocks[block_order[idx + 1]]}")
-            continue
+            proceed = input(f"Current Block : [{current_block}] | Press [ ENTER ] to proceed to next block : [{blocks[block_order[idx + 1]]}]")
+        continue
             
     
     while True:
@@ -168,15 +185,17 @@ for idx in range(len(block_order)):
         if remaining_time <= 0:
             break
         
-        if remaining_time <= 3: 
-            print(f"Block [ {current_block} ] starting in {remaining_time:.2f} seconds...", end="\r1")
-        else: 
-            print(f"Remaining time for block {block_idx}: {remaining_time:.2f} seconds..-", end='\r')
+
+        if not is_final_block: 
+            print(f"Current Block : [{current_block}] | Starting [{blocks[block_order[idx + 1]]}] in {remaining_time:.2f} seconds...", end="\r")
+        else : 
+            print(f"Current Block : [{current_block}] | Remaining time : {remaining_time:.2f} seconds...", end='\r')
         
         
         time.sleep(0.01)  # Sleep to prevent excessive CPU usage
-    
-    logging.debug(f"ENDED : {current_block}")
+    print()
+    logging.info(f"Completed Block : [{current_block}]")
+    #print(f"Completed Block : [{current_block}]")
 
 
-logging.debug("Experiment Complete.")
+logging.info("Experiment Complete.")
