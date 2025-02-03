@@ -8,14 +8,22 @@ import threading
 import json
 from pylsl import StreamInfo, StreamOutlet
 
-#What remains ? 
+# TODO : Read messages from the robot ->  
 
 # Experiment
 experiment_name = "ADEPT Heel".replace(" ", "_")
 conducted_time = datetime.datetime.now()
 subject_id = 0
-trial_number = 1
+trial_number = 2
 
+markers = {
+    "REST block started" : 0,
+    "STIMULI block staarted" : 1,
+    "waypoint 2 reached" : 13,
+    "reset system" : 99,
+
+
+}
 # Block Design
 blocks = [ "Rest", "Stimuli" ]
 durations = [ 3, 5 ] # Seconds
@@ -59,6 +67,8 @@ def save_experiment_to_file():
         "block_order" : block_order,
         "block_wait_for_input" : wait_for_input_blocks,
         
+        "markers" : markers,
+
         "using_fnirs" : use_fnirs,
         "using_eeg" : use_eeg,
         "use_ur3" : use_ur3,
