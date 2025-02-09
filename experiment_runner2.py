@@ -6,35 +6,31 @@ import socket
 import logging
 import threading
 import json
-from pylsl import StreamInfo, StreamOutlet
-
-# TODO : Read messages from the robot ->  
+from pylsl import StreamInfo, StreamOutlet  
 
 # Experiment
 experiment_name = "ADEPT Heel".replace(" ", "_")
 conducted_time = datetime.datetime.now()
 subject_id = 0
 trial_number = 2
+comments = ""
 
 markers = {
     "REST block started" : 0,
     "STIMULI block staarted" : 1,
     "waypoint 2 reached" : 13,
     "reset system" : 99,
-
-
 }
+
 # Block Design
 blocks = [ "Rest", "Stimuli" ]
 durations = [ 3, 5 ] # Seconds
 block_order = [ 0, 1, 0, 1] # NOTE : This are indices into the Blocks array
 wait_for_input_blocks = [ False, False ] # If True : to proceed to next block, a manual input is needed
 
-
-use_fnirs = True # 
-use_eeg = True # 
-use_ur3 = False # NOTE : This requires the program to wait for an accepted connection before experiment can start
-
+use_fnirs   = True # Send Markers to aurora
+use_eeg     = True # Send Markers to gRecorder
+use_ur3     = True # NOTE : This requires the program to wait for an accepted connection before experiment can start
 
 def validate_block_design(): # NOTE : This verifies your block design is possible to complete
     assert(len(durations) == len(blocks)) # Each block needs a duration
@@ -81,7 +77,6 @@ def save_experiment_to_file():
     json_file.close()
 save_experiment_to_file()
 
-
 # Logging
 # NOTE : Use logging.debug|info|error|warning to write to screen and console, use printf for only console
 log_filename = experiment_name + "_" + conducted_time.strftime("%d_%m_%Y_%H_%M_%S") + "subject_" + str(subject_id) + "_trial_" + str(trial_number) + ".log"
@@ -124,20 +119,39 @@ fnirs_outlet = StreamOutlet(fnirs_info) # LSL outlet
 logging.info(f"LSL outlet established {stream_name}:{stream_type}, {stream_channels}x{stream_format} @ {stream_id}")
 
 # UR3 Connection - TCP Server
-ur_server_ip = "192.168.50.53" # use "ipconfig"  to get this server
+ur_server_ip = "10.47.20.11" # use "ipconfig"  to get this server
 ur_server_port = 32000 #
 # NOTE : This ip, and port must be set in the UR3 program "Before Start" module -> socket_open(ip, port)
 ur_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # TCP server
+ur_server.bind((ur_server_ip, ur_server_port))
 ur_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # NOTE : Dont use, reserved for connection
 logging.info(f"TCP server established on {ur_server_ip} : {ur_server_port}")
 
 if use_ur3: 
     print(f"Please establish the UR3 TCP connection before starting experiment : ")
-    ur_server.listen(5)
+    ur_server.listen(1)
     print(f"TCP server listening on {ur_server_ip}:{ur_server_port} and waiting for UR3 connection...")
     ur_socket, ur_address = ur_server.accept()
     logging.info(f"Connection established with UR3 : {ur_address}.")
 
+# UR3 Force Sensor
+pressure_readings = []
+pressure_timings = []
+pressure_threshold = 50
+def handle_incoming_pressure_reading(pressure:int):
+    pressure_readings.append(pressure)
+    pass
+    
+def push_marker(marker:int):
+    if use_fnirs:
+        fnirs_outlet.push_sample([marker])
+    if use_eeg:
+        eeg_socket.sendto(fill_grecorder_xml_msg(marker), (eeg_target_ip, eeg_target_port)) # NOTE : This is already encoded to bytes
+    if use_ur3:
+       # the robot doesnt receieve any markers
+       pass
+
+    logging.debug("Pushed marker : " + str(marker))
 
 def push_block_onset_marker(block_idx:int): # Marks data with the onset of each block.
     if use_fnirs:
@@ -152,6 +166,32 @@ def push_block_onset_marker(block_idx:int): # Marks data with the onset of each 
 print_experiment_description()  
 
 start = input(f"Press [ ENTER ] to start first trial block [{blocks[block_order[0]]}]...")
+experiment_running = True
+
+if use_ur3:
+    def decode_ur_message(data):
+        if len(data) == int.__sizeof__(): #Check if we receive an integer, then its a pressure reading
+            handle_incoming_pressure_reading(int.from_bytes(data, "big"))
+            return None
+        try:
+            decoded_data = data.decode("utf-8").strip()  # Decode bytes to string
+            return decoded_data  # Otherwise, return as string
+        except UnicodeDecodeError:
+            logging.error(f"UR3 Server : Recieved undecodable data -> {data}")
+
+    def run_ur_server():
+        while experiment_running:
+            data = ur_socket.recv(1024)  # Receive up to 1024 bytes
+            msg = decode_ur_message(data)
+            
+            key = markers[msg]
+            if key is not None:
+                push_marker(key)
+
+    ur_server_thread = threading.Thread(target=run_ur_server)
+    ur_server_thread.start()
+    ur_socket.send("PROGRAM STARTED")
+
 
 def block_order_with_active_border(active_idx):
     order = ""
@@ -167,6 +207,7 @@ def block_order_with_active_border(active_idx):
     
     return order
 
+
 for idx in range(len(block_order)):
     block_start_time = time.time()
     block_idx = block_order[idx]
@@ -179,7 +220,6 @@ for idx in range(len(block_order)):
     print(f"Order : {block_order_with_active_border(idx)}")
     push_block_onset_marker(block_idx) # Mark data what block started
     
-    
     if wait_for_input_blocks[block_idx]: #Handle manual procedure blocks
         if is_final_block: # Is this the final block?
             proceed = input(F"Current Block : [{current_block}] | Press [ ENTER ] to complete trial...")
@@ -187,7 +227,6 @@ for idx in range(len(block_order)):
             proceed = input(f"Current Block : [{current_block}] | Press [ ENTER ] to proceed to next block : [{blocks[block_order[idx + 1]]}]")
         continue
             
-    
     while True:
         elapsed_time = time.time() - block_start_time
         remaining_time = block_duration - elapsed_time
@@ -195,7 +234,6 @@ for idx in range(len(block_order)):
         if remaining_time <= 0:
             break
         
-
         if not is_final_block: 
             print(f"Current Block : [{current_block}] | Starting [{blocks[block_order[idx + 1]]}] in {remaining_time:.2f} seconds...", end="\r")
         else : 
@@ -207,5 +245,16 @@ for idx in range(len(block_order)):
     logging.info(f"Completed Block : [{current_block}]")
     #print(f"Completed Block : [{current_block}]")
 
-
 logging.info("Experiment Complete.")
+
+experiment_running = False
+if use_ur3:
+    ur_socket.close()
+    ur_server_thread.join()
+
+import matplotlib.pyplot as plt
+plt.plot(pressure_readings)
+plt.title("Force Sensor During Experiment")
+plt.ylabel("Magnitude")
+plt.xlabel("Time")
+plt.show()

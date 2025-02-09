@@ -7,6 +7,26 @@ import datetime
 import os
 import logging
 
+markers = {
+    "REST block started" : 0,
+    "STIMULI block staarted" : 1,
+    "waypoint 2 reached" : 13,
+    "reset system" : 99,
+}
+for marker in markers:
+    print(marker)
+
+msg = "reset system"
+key = markers[msg]
+if key is not None:
+    print("found key")
+    print(key)
+else:
+    print("no key")
+
+print(int.__sizeof__())
+exit()
+
 logging.basicConfig(
     level=logging.DEBUG,  # Set the lowest level to capture all messages
     format='%(asctime)s - %(message)s',

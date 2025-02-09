@@ -7,7 +7,7 @@
 numpy
 matplotlib
 pandas
-scip
+scipy
 pathlib
 scikit-learn
 serial
