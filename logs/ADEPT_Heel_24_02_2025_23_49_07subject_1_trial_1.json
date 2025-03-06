@@ -1,0 +1,39 @@
+{
+    "experiment_name": "ADEPT_Heel",
+    "date_time": "24_02_2025_23_49_07",
+    "subject_ID": 1,
+    "trial_number": 1,
+    "blocks": [
+        "Rest",
+        "Stimuli"
+    ],
+    "block_onset_marker": [
+        2,
+        3
+    ],
+    "durations": [
+        3,
+        5
+    ],
+    "block_order": [
+        0,
+        1,
+        0,
+        1
+    ],
+    "manual_blocks": [
+        false,
+        false
+    ],
+    "blockless": true,
+    "markers": {
+        "Start": 0,
+        "End": 1,
+        "Block started: REST": 2,
+        "Block started: LCOP": 3,
+        "Block started: MCOP": 4
+    },
+    "using_fnirs": true,
+    "using_eeg": true,
+    "use_ur3": true
+}
