@@ -15,16 +15,20 @@ subject_id = 1
 trial_number = 1
 comment = ""
 
-
 # Block Design
 blocks = [ "Rest", "Stimuli" ]
-durations = [ 3, 5 ] # Seconds
+block_onset_marker = [ 2, 3 ] # What marker to send when this block is started
+durations = [ 3, 5 ] # Duration (seconds) of each block
+manual_blocks = [ False, False ] # If True : a manual input is needed to proceed to next block,
 block_order = [ 0, 1, 0, 1] # NOTE : This are indices into the Blocks array
-wait_for_input_blocks = [ False, False ] # If True : to proceed to next block, a manual input is needed
+
+# Blockless = Manual input of markers
+# NOTE : If we're using UR3 who is sending messages about when each 
+blockless = True
 
 # Baseline Configuration
+use_baseline = False
 baseline_duration = 30 # 30s pre and post baselines
-use_baseline = True
 
 # NOTE : We need to test wheter or not g.Recorder can handle values above 9
 markers = {
@@ -39,17 +43,15 @@ use_fnirs   = True # Send Markers to aurora
 use_eeg     = True # Send Markers to gRecorder
 use_ur3     = True # NOTE : This requires the program to wait for an accepted connection before experiment can start
 
-# If we're using ur3, how is the block design ran?
-# Using the UR3 we cannot rely on the accurate timings in this script,
-# meaning the block design should be passive
-blockless = True
+
 
 def validate_block_design(): # NOTE : This verifies your block design is possible to complete
     assert(len(durations) == len(blocks)) # Each block needs a duration
+    assert(len(block_onset_marker) == len(blocks))
     for block_idx in block_order: 
         assert(block_idx >= 0) # The block index must be inside the bounds of the Blocks array,
         assert(block_idx < len(blocks)) # 0 < idx < len(Blocks)
-    assert(len(wait_for_input_blocks) == len(blocks)) # Each block must either manually or automatically proceed
+    assert(len(manual_blocks) == len(blocks)) # Each block must either manually or automatically proceed
 validate_block_design()
 
 def print_experiment_description():
@@ -66,21 +68,24 @@ print_experiment_description()
 
 def save_experiment_to_file():
     encoded = {
-        "experiment_name": experiment_name, # Experiment
+        "experiment_name": experiment_name, # Experiment Info
         "date_time": conducted_time.strftime("%d_%m_%Y_%H_%M_%S"),
         "subject_ID": subject_id,
         "trial_number" : trial_number, 
         
         "blocks" : blocks, # Block Design
+        "block_onset_marker" : block_onset_marker,
         "durations" : durations,
         "block_order" : block_order,
-        "block_wait_for_input" : wait_for_input_blocks,
+        "manual_blocks" : manual_blocks,
         
-        "markers" : markers,
+        "blockless" : blockless, # Manual Input
+        
+        "markers" : markers, # Dictonary
 
-        "using_fnirs" : use_fnirs,
-        "using_eeg" : use_eeg,
-        "use_ur3" : use_ur3,
+        "using_fnirs" : use_fnirs, # Send markers to Aurora
+        "using_eeg" : use_eeg, # Send markers to g.Recorder
+        "use_ur3" : use_ur3, # Receive messages from the UR3
     }
     filename = experiment_name + "_" + conducted_time.strftime("%d_%m_%Y_%H_%M_%S") + "subject_" + str(subject_id) +  "_trial_" + str(trial_number) + ".json"
     filepath = "logs/" + filename 
@@ -235,11 +240,11 @@ def run_block_design():
         
         push_marker(block) # Mark data what block started
     
-        if wait_for_input_blocks[block]: #Handle manual procedure blocks
+        if manual_blocks[block]: #Handle manual procedure blocks
             if is_final_block: # Is this the final block?
-                proceed = input(F"Current Block : [{current_block}] | Press [ ENTER ] to complete trial...")
+                proceed = input(F"Current Block : [{current_block}] | MANUAL : Press [ ENTER ] to complete trial...")
             else:
-                proceed = input(f"Current Block : [{current_block}] | Press [ ENTER ] to proceed to next block : [{blocks[block_order[idx + 1]]}]")
+                proceed = input(f"Current Block : [{current_block}] | MANUAL : Press [ ENTER ] to proceed to next block : [{blocks[block_order[idx + 1]]}]")
             continue
 
         while True:
@@ -291,31 +296,33 @@ def record_post_trial_baseline():
         time.sleep(0.1)
     push_marker(markers["End"])
     logging.info(f"Completed Post-block design baseline : {baseline_duration} seconds")
-                    
-
+                   
 if use_baseline:
     ready = input(f"Press [ ENTER ] to start {baseline_duration} second baseline recording")
     record_pre_trial_baseline()
     
-    # CONDUCT BLOCK DESIGN
-    if not blockless:
-        run_block_design()
+# CONDUCT BLOCK DESIGN
+if not blockless:
+    start = input(f"Press [ ENTER ] to start block design! First block is [ {blocks[block_order[0]]} ]")
+    run_block_design()
     
-    if blockless:
-        while True:
-            # How do we run blockless ? 
-            # This just sits waiting for UR3 robot messages, or manual entry
-            
-            for marker_name, marker_value in markers.items():
-               print(f" [ {marker_name} ] : {marker_value}")
-            # print options
-            # N = Complete block design and start post-block baseline
-            print(f" [ N ] : Complete block design and start {baseline_duration} second baseline recording")
-            ans = input("Command : ")
-            
-            if ans.upper() == "N":
-                break
-    
+# MANUAL MARKING 
+if blockless:
+    while True:
+        print("BLOCKLESS : Manual Marking")
+        
+        for idx, (marker_name, marker_value) in enumerate(markers.items()):
+           print(f"[ {idx+1} ] : {marker_name.upper()}")
+        print(f"[ N ] : Exit")
+        
+        ans = input("Command : ")
+        if ans.upper() == "N":
+            break
+        
+        # Is answer between 0 and len()
+        push_marker(int(ans))
+
+if use_baseline:
     record_post_trial_baseline()
 
 logging.info("Experiment Complete.")
