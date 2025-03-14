@@ -16,11 +16,11 @@ trial_number = 1
 comment = ""
 
 # Block Design
-blocks = [ "Rest", "Stimuli" ]
-block_onset_marker = [ 2, 3 ] # What marker to send when this block is started
-durations = [ 3, 5 ] # Duration (seconds) of each block
-manual_blocks = [ False, False ] # If True : a manual input is needed to proceed to next block,
-block_order = [ 0, 1, 0, 1] # NOTE : This are indices into the Blocks array
+blocks = [ "Rest", "Right Stimuli", "Left Stimuli" ]
+block_onset_marker = [ 0, 0, 0 ] # What marker to send when this block is started
+durations = [ 10, 5, 5 ] # Duration (seconds) of each block
+manual_blocks = [ False, False, False ] # If True : a manual input is needed to proceed to next block,
+block_order = [ 0, 1, 0, 2, 0, 1, 0, 2, 0, 1, 0, 2, 0 ] # NOTE : This are indices into the Blocks array
 
 # Blockless = Manual input of markers
 # NOTE : If we're using UR3 who is sending messages about when each 
@@ -39,9 +39,9 @@ markers = {
     "Block started: MCOP" : 4,
 }
 
-use_fnirs   = True # Send Markers to aurora
-use_eeg     = True # Send Markers to gRecorder
-use_ur3     = True # NOTE : This requires the program to wait for an accepted connection before experiment can start
+use_fnirs   = False # Send Markers to aurora
+use_eeg     = False # Send Markers to gRecorder
+use_ur3     = False # NOTE : This requires the program to wait for an accepted connection before experiment can start
 
 
 
