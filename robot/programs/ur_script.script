@@ -144,6 +144,8 @@ def myProg():
   socket_close(socket name=’socket_0’) #closes socket connection
   socket_read_line(socket name=’socket_0’) #Read the socket buffer until the first \r\n or \n, bytes in network order
   
+  sleep(t)
+  # t : time (seconds)
 
   force_mode()
   end_force_mode() #

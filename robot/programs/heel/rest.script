@@ -1,0 +1,2 @@
+socket_send_string("Rest", "socket_0")
+sleep(rest_duration)

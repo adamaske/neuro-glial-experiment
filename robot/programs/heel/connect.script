@@ -1,0 +1,5 @@
+
+while connected_to_server != True:
+    connected_to_server = socket_open("192.168.0.101", 32000)
+    textmsg("Connection Status : ", connected_to_server)
+    sleep(1)

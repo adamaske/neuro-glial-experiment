@@ -1,0 +1,22 @@
+
+# Block design parameters
+global rest_duration = 20
+global task_duration = 10
+
+# Translation units in meters
+global indent_delta_z = 0.005
+global shear_delta_x = 0.007
+global retreat_delta_z = -0.025
+global retreat_delta_x = -0.007 
+
+# Careful and fast movement speeds
+global joint_acceleration_careful = 0.1
+global joint_speed_careful = 0.1
+global joint_acceleration_fast = 1
+global joint_speed_fast = 1
+
+# Server connection
+global connected_to_server = False
+
+# Move from this location only
+global contact_pose = get_target_tcp_pose()
