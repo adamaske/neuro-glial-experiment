@@ -1,41 +1,33 @@
-socket_send_string("Supination")
-socket_sned_string("Pronation")
-
-socket_sned_string("Indent")
-
-socket_send_string("Shear")
-
-
 # 1. Contact - Home position 
-
-# 5. Return
 movel(contact_pose, a=joint_acceleration_careful, v=joint_speed_careful)
 
-socket_send_string("Supination")
+sleep(0.1)
 # 2. Indent
 indent_delta_pose = p[0, 0, indent_delta_z, 0, 0, 0]
 indent_pose = pose_trans(contact_pose, indent_delta_pose)
 
 socket_send_string("Indent")
-movel(indent_pose, a=joint_acceleration_careful, v=joint_speed_careful)
+movel(indent_pose, a=indent_acceleration, v=indent_speed)
   
-sleep(0.5)
+sleep(0.1)
+
 # 3. Shear
 shear_delta_pose = p[shear_delta_x, 0, 0, 0, 0, 0]
 shear_pose = pose_trans(indent_pose, shear_delta_pose)
 
-socket_sned_string("Shear")
-movel(shear_pose, a=joint_acceleration_fast, v=joint_speed_fast)
+socket_send_string("Shear")
+movel(shear_pose, a=shear_acceleration, v=shear_speed)
 
-sleep(0.5)
+sleep(0.3)
+
 # 4.a Retreat - Backwards
 retreat_backwards_delta_pose = p[0, 0, retreat_delta_z, 0, 0, 0]
 retreat_backwards_pose = pose_trans(shear_pose, retreat_backwards_delta_pose)
 
-movel(retreat_backwards_pose, a=joint_acceleration_careful, v=joint_speed_careful)
+movel(retreat_backwards_pose, a=retreat_acceleration, v=retreat_speed)
 
 # 4.b Retreat - Sideways
 retreat_sideways_delta_pose = p[retreat_delta_x, 0, 0, 0, 0, 0]
 retreat_sideways_pose = pose_trans(retreat_backwards_pose, retreat_sideways_delta_pose)
 
-movel(retreat_sideways_pose, a=joint_acceleration_careful, v=joint_speed_careful)
+movel(retreat_sideways_pose, a=retreat_acceleration, v=retreat_speed)
