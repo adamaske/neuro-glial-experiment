@@ -20,6 +20,7 @@ swap_target()
 move_to_above_target()
 
 # Wait here for the rest duration
+send_rest_string()
 sleep(rest_duration)
 
 # Move dowards ready for shear stimuli

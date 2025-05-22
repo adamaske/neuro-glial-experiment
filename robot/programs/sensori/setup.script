@@ -45,3 +45,7 @@ def swap_target():
         current_target_pose = target_1
     end
 end
+
+def send_rest_string():
+  socket_send_string("Rest")
+end
