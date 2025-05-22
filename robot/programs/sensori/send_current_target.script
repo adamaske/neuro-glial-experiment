@@ -1,0 +1,5 @@
+if current_target = 1:
+    msg = "Left"
+elif current_target = 2:
+    msg = "Right"
+socket_send_string(msg)

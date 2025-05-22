@@ -1,0 +1,12 @@
+# Remeber this is encaspulated by a while loop
+
+forward_shear_delta_pose = p[shear_x_distance, 0, 0, 0, 0, 0]
+backward_shear_delta_pose = p[-shear_x_distance, 0, 0, 0, 0, 0]
+
+forward_pose = pose_trans(current_target_pose, forward_shear_delta_pose)
+backward_pose = pose_trans(current_target_pose, backward_shear_delta_pose)
+
+# We are either at the current target pose or at the backward shear pose
+movel(forward_pose, a=shear_acceleration, v=shear_joint_speed)
+
+movel(backward_pose, a=shear_acceleration, v=shear_joint_speed)

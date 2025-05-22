@@ -1,0 +1,27 @@
+
+def move_to_above_target():
+    retreat_delta_pose  = p[0, 0, negative_z_retreat_distance, 0, 0, 0]
+    retreat_pose = pose_trans(current_target_pose, retreat_delta_pose)
+
+    movel(retreat_pose, a=retreat_accleration, v=retreat_joint_speed)
+end
+
+def move_to_target():
+    # Move to the target
+    movel(current_target_pose, a=retreat_accleration, v=retreat_joint_speed)
+end
+
+# Move upwards from current target
+move_to_above_target()
+
+swap_target()
+
+# Move above the new target
+move_to_above_target()
+
+# Wait here for the rest duration
+sleep(rest_duration)
+
+# Move dowards ready for shear stimuli
+move_to_target()
+
